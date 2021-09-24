@@ -23,7 +23,7 @@ namespace Account.Microservice.Controllers
         }
 
         // GET api/<AccountController>/5
-        [HttpGet("{CustomerID}")]
+        [HttpGet("cid/{CustomerID}")]
         public IEnumerable<Models.Account> GetCustomerAccounts(int CustomerID)
         {
             return null;
@@ -31,7 +31,7 @@ namespace Account.Microservice.Controllers
 
 
         //GET api/<AccountController>/{id}/{fromdate}/{todate}
-        [HttpGet("{AccountID}/{FromDate}/{ToDate}")]
+        [HttpGet("getaccounts/{AccountID}/{FromDate}/{ToDate}")]
         public IEnumerable<Statement> GetAccountStatement(int AccountID,DateTime FromDate,DateTime ToDate)
         {
             List<Statement> Statement = new List<Statement>();
@@ -40,7 +40,7 @@ namespace Account.Microservice.Controllers
 
 
         //GET api/<AccountController>/{id}
-        [HttpGet("{AccountID}")]
+        [HttpGet("aid/{AccountID}")]
         public Models.Account GetAccount(int AccountID)
         {
             Models.Account Account = new Models.Account();
@@ -48,29 +48,33 @@ namespace Account.Microservice.Controllers
         }
 
         // POST api/<AccountController>
-        [HttpPost("{CustomerID}")]
-        public AccountCreationStatus CreateAccount(int CustomerId,Models.Account account)
+        [HttpPost("createacc/{CustomerID}")]
+        public AccountCreationStatus CreateAccount(int CustomerID,Models.Account account)
         {
+            int n = 0;
+            account.AccountID = 0;
             if (ModelState.IsValid)
             {
                 var accountId = _context.Add(account);
+                _context.SaveChanges();
+                 n = accountId.Entity.AccountID;
                 Console.Write(accountId);
 
             }
-            //if ( != null)
-                return new AccountCreationStatus(12, "success");
-           // return new AccountCreationStatus(0, "fail");
+            if (n != 0)
+                return new AccountCreationStatus(n, "success");
+            return new AccountCreationStatus(0, "fail");
         }
 
         //POST api/<AcountController>/{AccountID}/{Amount}
-        [HttpPost("{AccountID}/{Amount}")]
+        [HttpPost("deposit/{AccountID}/{Amount}")]
         public TransactionStatus Deposite(int AccountID,double Amount)
         {
             return new TransactionStatus();
         }
 
         //POST api/<AcountController>/{AccountID}/{Amount}
-        [HttpPost("{AccountID}/{Amount}")]
+        [HttpPost("withdraw/{AccountID}/{Amount}")]
         public TransactionStatus Withdraw(int AccountID, double Amount)
         {
             return new TransactionStatus();

@@ -10,7 +10,7 @@ namespace Account.Microservice.Models
         public int AccountID { get; set; }
         public float AccountBalance { get; set; }
 
-        public AccountType AccountType { get; set; }
+        public int AccountType { get; set; }
     }
 
     public enum AccountType
