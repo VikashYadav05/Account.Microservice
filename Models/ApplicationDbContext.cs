@@ -14,6 +14,6 @@ namespace Account.Microservice.Models
 
         }
         public DbSet<Account> Account { get; set; }
-
+        public DbSet<Statement> Statement { get; set; }
     }
 }

@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 namespace Account.Microservice.Models
 {
     public class Account
-    {
+    { 
+        public int CustomerID { get; set; }
         public int AccountID { get; set; }
         public float AccountBalance { get; set; }
 

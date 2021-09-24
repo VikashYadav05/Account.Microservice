@@ -23,33 +23,46 @@ namespace Account.Microservice.Controllers
         }
 
         // GET api/<AccountController>/5
-        [HttpGet("cid/{CustomerID}")]
+        [HttpGet("all/{CustomerID}")]
         public IEnumerable<Models.Account> GetCustomerAccounts(int CustomerID)
         {
-            return null;
+            return _context.Account.Where(x => x.CustomerID == CustomerID); //out List<Models.Account>);
+        
         }
 
 
         //GET api/<AccountController>/{id}/{fromdate}/{todate}
-        [HttpGet("getaccounts/{AccountID}/{FromDate}/{ToDate}")]
+        [HttpGet("getAccountByID/{AccountID}/{FromDate}/{ToDate}")]
         public IEnumerable<Statement> GetAccountStatement(int AccountID,DateTime FromDate,DateTime ToDate)
-        {
-            List<Statement> Statement = new List<Statement>();
-            return Statement;
+        {  
+            if(FromDate==default(DateTime) && ToDate==default(DateTime))
+            {
+                ToDate = DateTime.UtcNow;
+                FromDate = DateTime.UtcNow.AddDays(-30);
+                return _context.Statement.Where(x => (x.Date <= ToDate && x.Date >= ToDate));
+            }
+           return _context.Statement.Where(x => (x.Date <= ToDate && x.Date >= ToDate));
         }
 
 
         //GET api/<AccountController>/{id}
-        [HttpGet("aid/{AccountID}")]
-        public Models.Account GetAccount(int AccountID)
+        [HttpGet("get/{AccountID}")]
+        public IActionResult GetAccount(int AccountID)
         {
-            Models.Account Account = new Models.Account();
-            return Account;
+            var account = _context.Account.Find(AccountID);
+            if(account!=null)
+            {
+                Models.Account acc = new Models.Account();
+                acc.AccountID = account.AccountID;
+                acc.AccountBalance = account.AccountBalance;
+                return Ok(acc);
+            }
+            return NotFound("Account not Found");
         }
 
         // POST api/<AccountController>
-        [HttpPost("createacc/{CustomerID}")]
-        public AccountCreationStatus CreateAccount(int CustomerID,Models.Account account)
+        [HttpPost("create/{CustomerID}")]
+        public AccountCreationStatus CreateAccount(Models.Account account)
         {
             int n = 0;
             account.AccountID = 0;
@@ -73,24 +86,80 @@ namespace Account.Microservice.Controllers
             var account = _context.Account.Find(AccountID);
             if(account!=null)
             {
-                account.AccountBalance += Amount;
-                _context.Update(account);
-                _context.SaveChanges();
-                return Ok(Amount+" ammount Deposited");
+                using var transaction = _context.Database.BeginTransaction();
+
+                try
+                {
+                    transaction.CreateSavepoint("BeforeDeposite");
+
+                    account.AccountBalance += Amount;
+                    _context.Update(account);
+                    _context.SaveChanges();
+
+                    Statement statement = new Statement();
+                    statement.AccountID = AccountID;
+                    statement.Date = DateTime.Now;
+                    statement.Deposite = Amount;
+                    statement.Withdrawal = 0;
+                    statement.ClosingBalance = account.AccountBalance;
+                    statement.Ref = 0;
+                    statement.Description = "Deposited";
+
+                    _context.Statement.Update(statement);
+                    _context.SaveChanges();
+
+                    transaction.Commit();
+                    return Ok(Amount + " ammount Deposited");
+                }
+                catch
+                {
+                    transaction.RollbackToSavepoint("BeforeDeposite");
+                }
             }
             return BadRequest("Unable to deposit ");
         }
 
         //POST api/<AcountController>/{AccountID}/{Amount}
         [HttpPost("withdraw/{AccountID}/{Amount}")]
-        public TransactionStatus Withdraw(int AccountID, double Amount)
+        public IActionResult Withdraw(int AccountID, float Amount)
         {
-            return new TransactionStatus();
-        }
+            var account = _context.Account.Find(AccountID);
+            if (account != null)
+            {
 
-        private bool AccountExists(int id)
-        {
-            return _context.Account.Any(e => e.AccountID == id);
+                //Will implement Rule Service req for validating withdraw
+                using var transaction = _context.Database.BeginTransaction();
+                try
+                {
+                    transaction.CreateSavepoint("BeforeWithdraw");
+
+                    account.AccountBalance -= Amount;
+                    _context.Update(account);
+                    _context.SaveChanges();
+
+                    Statement statement = new Statement();
+                    statement.AccountID = AccountID;
+                    statement.Date = DateTime.Now;
+                    statement.Deposite = 0;
+                    statement.Withdrawal =Amount;
+                    statement.ClosingBalance = account.AccountBalance;
+                    statement.Ref = 0;
+                    statement.Description = "Withdrawn";
+
+                    _context.Statement.Update(statement);
+                    _context.SaveChanges();
+
+                    transaction.Commit();
+
+                    return Ok(Amount + " ammount Withdrawn");
+                }
+                catch
+                {
+
+                }
+            }
+            return BadRequest("Something went wrong !");
+
         }
     }
 }
