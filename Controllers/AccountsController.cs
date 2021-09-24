@@ -68,9 +68,17 @@ namespace Account.Microservice.Controllers
 
         //POST api/<AcountController>/{AccountID}/{Amount}
         [HttpPost("deposit/{AccountID}/{Amount}")]
-        public TransactionStatus Deposite(int AccountID,double Amount)
+        public IActionResult Deposite(int AccountID,float Amount)
         {
-            return new TransactionStatus();
+            var account = _context.Account.Find(AccountID);
+            if(account!=null)
+            {
+                account.AccountBalance += Amount;
+                _context.Update(account);
+                _context.SaveChanges();
+                return Ok(Amount+" ammount Deposited");
+            }
+            return BadRequest("Unable to deposit ");
         }
 
         //POST api/<AcountController>/{AccountID}/{Amount}
@@ -78,6 +86,11 @@ namespace Account.Microservice.Controllers
         public TransactionStatus Withdraw(int AccountID, double Amount)
         {
             return new TransactionStatus();
+        }
+
+        private bool AccountExists(int id)
+        {
+            return _context.Account.Any(e => e.AccountID == id);
         }
     }
 }
