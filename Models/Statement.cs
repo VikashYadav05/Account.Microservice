@@ -11,13 +11,19 @@ namespace Account.Microservice.Models
         [Key]
         public int Ref { get; set; }
 
+        [Required(ErrorMessage ="Account id required")]
         public int AccountID { get; set; }
-        public DateTime Date { get; set; }
-        public string Description { get; set; }
-       
-        public double Withdrawal { get; set; }
-        public double Deposite { get; set; }
+       // [Required(ErrorMessage = "Account id required")]
+        public DateTime? Date { get; set; }
 
+        [Required(ErrorMessage = "description required")]
+        public string Description { get; set; }
+        [Required(ErrorMessage = "withdrawal amount requird required")]
+
+        public double Withdrawal { get; set; }
+        [Required(ErrorMessage = "deposite amount  required")]
+        public double Deposite { get; set; }
+        [Required(ErrorMessage = "closing balance required")]
         public double ClosingBalance { get; set; }
     }
 }

@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Account.Microservice.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210924183729_Init")]
-    partial class Init
+    [Migration("20210925053426_new")]
+    partial class @new
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -55,13 +55,14 @@ namespace Account.Microservice.Migrations
                     b.Property<double>("ClosingBalance")
                         .HasColumnType("float");
 
-                    b.Property<DateTime>("Date")
+                    b.Property<DateTime?>("Date")
                         .HasColumnType("datetime2");
 
                     b.Property<double>("Deposite")
                         .HasColumnType("float");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Withdrawal")

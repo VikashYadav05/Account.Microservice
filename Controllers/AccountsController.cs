@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Account.Microservice.Models;
 using Microsoft.OpenApi;
+using Account.Microservice.Repo;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -16,7 +17,8 @@ namespace Account.Microservice.Controllers
     {
 
         private readonly ApplicationDbContext _context;
-      
+
+        private readonly IAccountCustomerRepo AC_Repo;
         public AccountsController(ApplicationDbContext context)
         {
             _context = context;
@@ -26,7 +28,7 @@ namespace Account.Microservice.Controllers
         [HttpGet("all/{CustomerID}")]
         public IEnumerable<Models.Account> GetCustomerAccounts(int CustomerID)
         {
-            return _context.Account.Where(x => x.CustomerID == CustomerID); //out List<Models.Account>);
+            return AC_Repo.GetCustomerAccounts(CustomerID, _context); //out List<Models.Account>);
         
         }
 
@@ -52,10 +54,11 @@ namespace Account.Microservice.Controllers
             var account = _context.Account.Find(AccountID);
             if(account!=null)
             {
-                Models.Account acc = new Models.Account();
-                acc.AccountID = account.AccountID;
-                acc.AccountBalance = account.AccountBalance;
-                return Ok(acc);
+                //Models.Account acc = new Models.Account();
+                //acc.AccountID = account.AccountID;
+                //acc.AccountBalance = account.AccountBalance;
+                 
+                return Ok(account);
             }
             return NotFound("Account not Found");
         }
@@ -64,19 +67,7 @@ namespace Account.Microservice.Controllers
         [HttpPost("create/{CustomerID}")]
         public AccountCreationStatus CreateAccount(Models.Account account)
         {
-            int n = 0;
-            account.AccountID = 0;
-            if (ModelState.IsValid)
-            {
-                var accountId = _context.Add(account);
-                _context.SaveChanges();
-                 n = accountId.Entity.AccountID;
-                Console.Write(accountId);
-
-            }
-            if (n != 0)
-                return new AccountCreationStatus(n, "success");
-            return new AccountCreationStatus(0, "fail");
+            return AC_Repo.CreateAccount(account, _context);
         }
 
         //POST api/<AcountController>/{AccountID}/{Amount}
@@ -155,7 +146,7 @@ namespace Account.Microservice.Controllers
                 }
                 catch
                 {
-
+                    transaction.RollbackToSavepoint("BeforeWithdraw");
                 }
             }
             return BadRequest("Something went wrong !");
